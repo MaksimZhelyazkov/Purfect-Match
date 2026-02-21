@@ -18,7 +18,10 @@ var commentRoutes    = require("./routes/comments"),
 
 // mongoose.connect("mongodb://localhost/yelp_camp_v4");
 // mongoose.connect("mongodb://maxim:maxim92@ds245170.mlab.com:45170/maxworkspace");
-mongoose.connect(process.env.DATABASEURL);
+mongoose.connect(process.env.DATABASEURL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
 
 
 app.use(bodyParser.urlencoded({extended: true}));
