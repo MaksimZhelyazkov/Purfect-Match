@@ -1,52 +1,68 @@
-var express        = require("express"),
-        app            = express(),
-        bodyParser     = require("body-parser"),
-        mongoose       = require("mongoose"),
-        flash          = require("connect-flash"),
-        passport       = require("passport"),
-        LocalStrategy  = require("passport-local"),
-        methodOverride = require("method-override"),
-        User           = require("./models/user");
+var mongoose = require("mongoose");
+var Cat = require("./models/cat");
+var Comment = require("./models/comment");
 
-// Requiring routes
-var commentRoutes = require("./routes/comments"),
-        catRoutes     = require("./routes/cats"),
-        indexRoutes   = require("./routes/index");
+var data = [
+    {
+        name: "Whiskers",
+        age: 24,
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/1200px-Cat_November_2010-1a.jpg",
+        description: "A playful tabby who loves cuddles and chasing toys.",
+        author: {
+            id: "588c2e092403d111454fff76",
+            username: "Admin"
+        }
+    },
+    {
+        name: "Luna",
+        age: 12,
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bb/Kittyply_edit1.jpg/1200px-Kittyply_edit1.jpg",
+        description: "A calm and gentle black cat who enjoys sunny windowsills.",
+        author: {
+            id: "588c2e092403d111454fff76",
+            username: "Admin"
+        }
+    },
+    {
+        name: "Oliver",
+        age: 36,
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/1200px-Cat03.jpg",
+        description: "An adventurous orange tabby looking for a loving home.",
+        author: {
+            id: "588c2e092403d111454fff76",
+            username: "Admin"
+        }
+    }
+];
 
-mongoose.connect(process.env.DATABASEURL, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-});
+function seedDB() {
+    Cat.deleteMany({}, function (err) {
+        if (err) {
+            console.log(err);
+        }
+        console.log("Removed cats!");
+        data.forEach(function (seed) {
+            Cat.create(seed, function (err, cat) {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log("Added a cat: " + cat.name);
+                    Comment.create({
+                        text: "Such a beautiful cat!",
+                        author: { id: "588c2e092403d111454fff76", username: "Admin" }
+                    }, function (err, comment) {
+                        if (err) {
+                            console.log(err);
+                        } else {
+                            cat.comments.push(comment);
+                            cat.save();
+                            console.log("Created a comment");
+                        }
+                    });
+                }
+            });
+        });
+    });
+}
 
-app.use(bodyParser.urlencoded({extended: true}));
-app.set("view engine", "ejs");
-app.use(express.static(__dirname + "/public"));
-app.use(methodOverride("_method"));
-app.use(flash());
-
-// Passport configuration
-app.use(require("express-session")({
-        secret: "cats are the best",
-        resave: false,
-        saveUninitialized: false
-}));
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-
-app.use(function(req, res, next){
-        res.locals.currentUser = req.user;
-        res.locals.error = req.flash("error");
-        res.locals.success = req.flash("success");
-        next();
-});
-
-app.use("/", indexRoutes);
-app.use("/cats", catRoutes);
-app.use("/cats/:id/comments", commentRoutes);
-
-app.listen(process.env.PORT || 3000, function(){
-        console.log("Purfect Match Server Has Started!");
-});
+module.exports = seedDB;
